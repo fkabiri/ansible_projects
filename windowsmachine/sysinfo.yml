@@ -1,0 +1,48 @@
+---
+- name: Get hardware Specs
+  hosts: windows_servers
+  gather_facts: no
+
+  tasks:
+    - name: Create temporary build directory
+      win_tempfile:
+        state: directory
+        suffix: build
+      register: temp_path
+
+    - name: debug
+      debug:
+        var: temp_path.path
+
+    - name: copy powershell script to remote machine
+      win_copy:
+        src: /opt/windowsmachine/sysinfo.ps1
+        dest: "{{ temp_path.path }}"
+
+    - name: Read system info
+      win_shell: "{{ temp_path.path }}\\sysinfo.ps1"
+      args:
+        chdir: "{{ temp_path.path }}"
+      register: sysinfo_output
+
+    - name: add variables to dummy host
+      add_host:
+        name: "variable_holder"
+        shared_variable:  "{{ sysinfo_output.stdout_lines }}"
+
+    - name: Debug outputs
+      debug:
+        var: sysinfo_output
+        
+
+- name: process system info
+  hosts: localhost
+  gather_facts: no
+  vars:
+    shared_variable: "{{ hostvars['variable_holder']['shared_variable'] }}"
+
+  tasks:
+    - name: execute interpreter script
+      script: "get_info.py {{ shared_variable }}"
+      args:
+        executable: python

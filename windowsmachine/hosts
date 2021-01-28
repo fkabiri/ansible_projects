@@ -1,0 +1,10 @@
+[windows_servers]
+WIN-M9HIO2E944R
+
+[windows_servers:vars]
+ansible_user=ansible
+ansible_password=Kabiri#23724
+ansible_connection=winrm
+ansible_winrm_transport=credssp
+ansible_winrm_message_encryption=always
+ansible_winrm_server_cert_validation=ignore
